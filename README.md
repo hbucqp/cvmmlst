@@ -88,8 +88,3 @@ The content in csv summary file like
 |3 |1 |4| 39 | 12 | 14 | 4 |87 | listeria_2 | sample04|
 |2 |4 |4 |1 |4 |3 |5 |3 |listeria_2 | sample05|
 |6 |6| 8 |37 | 7 |8 |1 |121| listeria_2 | sample06|
-
-
-
-
-

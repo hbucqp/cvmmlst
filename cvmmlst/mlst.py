@@ -1,3 +1,6 @@
+
+# -*- coding:utf-8 -*-
+
 import os
 import re
 import sys
@@ -23,7 +26,7 @@ class mlst():
 
     def biopython_blast(self):
         cline = NcbiblastnCommandline(query=self.inputfile, db=self.database, dust='no', ungapped=True,
-                                      evalue=1E-20, out=self.temp_output, culling_limit=1,
+                                      evalue=1E-20, out=self.temp_output,
                                       outfmt="6 sseqid slen length nident",
                                       perc_identity=self.minid, max_target_seqs=10000,
                                       num_threads=self.threads)
@@ -41,19 +44,30 @@ class mlst():
             if nident * 100 / hlen >= self.mincov:
                 if sch not in result.keys():  # check if sch is the key of result
                     result[sch] = {}
-                if hlen == alen & nident == hlen:
-                    if gene not in result[sch].keys():
-                        result[sch][gene] = num
+                if hlen == alen & nident == hlen: # exact match
+                    if gene in result[sch].keys():
+                        if not re.search(r'[~\?]', result[sch][gene]):
+                            print ('Found additional exact allele match')
+                            result[sch][gene] = str(result[sch][gene]) + ', ' + str(num)
                     else:
-                        if num <= result[sch][gene]:
-                            result[sch][gene] = num
-                        else:
-                            next
-                elif alen == hlen:
-                    result[sch][gene] = f'~{num}'
+                        result[sch][gene] = num
+                        # if num <= result[sch][gene]:
+                        #     result[sch][gene] = num
+                        # else:
+                        #     next
+                # new allele
+                elif alen == hlen & nident != hlen:
+                    if gene not in result[sch].keys():
+                        result[sch][gene] = f'~{num}'
+                    else:
+                        next
                     # result[sch] = mlst
+                elif alen != hlen & nident == hlen: # partial match
+                    if gene not in result[sch].keys():
+                        result[sch][gene] = f'{num}?'
                 else:
-                    result[sch][gene] = f'{num}?'
+                    next
+        # remove temp blastn output file
         os.remove(self.temp_output)
         return result
 
@@ -68,10 +82,12 @@ class mlst():
                  }
         }
         """
+        scheme_path = os.path.abspath(os.path.dirname(__file__))
         count = 0
         col = []
         genotype = {}
-        db_path = os.path.join('db/pubmlst', scheme)
+        db_path = os.path.join(os.path.join(scheme_path, 'db/pubmlst'), scheme)
+        # print(db_path)
         for file in os.listdir(db_path):
             # print(file)
             if file.endswith('.tfa'):
@@ -80,7 +96,7 @@ class mlst():
                 # print(base)
                 count += 1
                 # if file.endswith()
-        profile_path = os.path.join('db/pubmlst', scheme, scheme + '.txt')
+        profile_path = os.path.join(db_path, scheme + '.txt')
         df_profile = pd.read_csv(profile_path, sep='\t')
         df_profile['profile'] = df_profile[col].apply(
             lambda x: '-'.join(x .astype(str)), axis=1)
@@ -110,25 +126,32 @@ class mlst():
         get sequence type
         """
         col, genotype = mlst.build_genotype(scheme)
+        # print(genotype) # genotype为dict {sig:st}
         loci = len(result[scheme])
+        print(result[scheme])
         sig = ''
         if loci < genotype[scheme]['nloci']:
             st = 'NA'
+            df_tmp = pd.DataFrame.from_dict(result[scheme], orient='index').T
+            df_tmp['Note'] = f'Only found {loci} loci in genome, could not determine ST'
+
         else:
             alleles = []
             for i in col:
                 alleles.append(result[scheme][i])
             alleles_str = '-'.join(alleles)
             if re.search('[\?~]', alleles_str):
-                st = 'NA'
+                st = '-'
             else:
-                st = genotype[scheme]['profiles'][alleles_str]
-
-            df = pd.DataFrame.from_dict(
+                if alleles_str in genotype[scheme]['profiles']:
+                    st = genotype[scheme]['profiles'][alleles_str]
+                else:
+                    st = "NewST"
+            df_tmp = pd.DataFrame.from_dict(
                 dict(zip(col, alleles)), orient='index').T
-            df['ST'] = st
-            df['Scheme'] = scheme
-        return df
+        df_tmp['ST'] = st
+        df_tmp['Scheme'] = scheme
+        return df_tmp
 
     @staticmethod
     def is_fasta(file):

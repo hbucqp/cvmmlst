@@ -1,10 +1,14 @@
+#!/usr/bin/python3
+
+# -*- coding:utf-8 -*-
+
 import os
 import sys
 import argparse
 import subprocess
 import pandas as pd
 from Bio import SeqIO
-from mlst import mlst
+from .mlst import mlst
 
 
 def args_parse():
@@ -47,8 +51,10 @@ def get_version(rel_path: str) -> str:
 
 
 def initialize_db():
+    print("Creating mlst blast database...")
     subprocess.run("bash mlstdb_setup.sh", shell=True,
-                   capture_output=True, encoding='utf-8')
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, encoding='utf-8')
+    print("Done")
 
 
 def main():
@@ -77,9 +83,7 @@ def main():
 
         # get the database path
         database_path = os.path.join(
-            os.path.dirname(__file__), f'db/blast/mlst.fa')
-
-        # print(database_path)
+            os.path.dirname(__file__), os.path.join(os.path.abspath(os.path.dirname(__file__)), 'db/blast/mlst.fa'))
 
         for file in os.listdir(input_path):
             file_base = str(os.path.splitext(file)[0])
@@ -93,19 +97,41 @@ def main():
                     print(f'Processing {file}')
                     result = mlst(file_path, database_path, output_path,
                                   threads, minid, mincov).biopython_blast()
-                    print(
-                        f"Finishing process {file}: writing results to " + str(outfile))
-                    sch = mlst.best_scheme(result)
+                    if len(result) != 0:
 
-                    df = mlst.get_st(result, sch)
+                        sch = mlst.best_scheme(result)
 
-                    df['FILE'] = file_base
-                    df.to_csv(outfile, sep='\t', index=False)
-                    # change all tab results to pivot table fomat
+                        df = mlst.get_st(result, sch)
+
+                        if len(df) != 0:
+                            df['FILE'] = file_base
+                            order = list(reversed(df.columns.to_list()))
+                            df = df[order]
+                            # print(df)
+                            df.to_csv(outfile, sep='\t', index=False)
+                            print(
+                                f"Finishing process {file}: writing results to " + str(outfile))
+                        # else:
+                        #     df = pd.DataFrame()
+                        #     df['Note'] = 'Could not matching any loci in all schemes, next...'
+                        #     df['ST'] = '-'
+                        #     df['Scheme'] = '-'
+                        #     df['FILE'] = file_base
+                        #     print(
+                        #         f'Could not found similar scheme of {file_base}, writing result to ' + str(outfile))
+                    else:
+                        df = pd.DataFrame()
+                        df['Note'] = 'Could not matching any loci in all schemes, next...'
+                        df['ST'] = '-'
+                        df['Scheme'] = '-'
+                        df['FILE'] = file_base
+                        print(
+                            f'Could not matching any loci in all schemes, next...')
+                        order = list(reversed(df.columns.to_list()))
+                        df = df[order]
+                        df.to_csv(outfile, sep='\t', index=False)
+
                     df_all = pd.concat([df_all, df])
-
-                # if args.store_arg_seq:
-                #     Blaster.get_arg_seq(file_base, result_dict, output_path)
 
         # output final pivot dataframe to outpu_path
         summary_file = os.path.join(output_path, 'mlst_summary.csv')

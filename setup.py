@@ -40,21 +40,22 @@ def get_version(rel_path: str) -> str:
 
 about = {}
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'cvmmlst', '__init__.py'), 'r') as f:
+with open(os.path.join(here, 'cvmmlst', '__init__.py'), 'r', encoding='utf-8') as f:
     exec(f.read(), about)
-print(about)
 
 
-with open('README.md', 'r') as f:
-    readme = f.read()
+# Get the long description from the relevant file
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 
 setup(
     name="cvmmlst",
     version=about['__version__'],
     keywords=["wgs", "pubmlst", "mlst"],
-    description=readme,
-    long_description='text/markdown',
+    description="python mlst analysis tool",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     license="MIT Licence",
     url="https://github.com/hbucqp/cvmmlst",
     author=about['__author__'],
