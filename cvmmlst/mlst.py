@@ -26,7 +26,7 @@ class mlst():
 
     def biopython_blast(self):
         cline = NcbiblastnCommandline(query=self.inputfile, db=self.database, dust='no', ungapped=True,
-                                      evalue=1E-20, out=self.temp_output,
+                                      evalue=1E-20, out=self.temp_output,  # delete culling_limit parameters
                                       outfmt="6 sseqid slen length nident",
                                       perc_identity=self.minid, max_target_seqs=10000,
                                       num_threads=self.threads)
@@ -44,17 +44,15 @@ class mlst():
             if nident * 100 / hlen >= self.mincov:
                 if sch not in result.keys():  # check if sch is the key of result
                     result[sch] = {}
-                if hlen == alen & nident == hlen: # exact match
+                # resolve the bug that could not get exactly matched allele
+                if hlen == alen & nident == hlen:  # exact match
                     if gene in result[sch].keys():
                         if not re.search(r'[~\?]', result[sch][gene]):
-                            print ('Found additional exact allele match')
-                            result[sch][gene] = str(result[sch][gene]) + ', ' + str(num)
+                            print('Found additional exact allele match')
+                            result[sch][gene] = str(
+                                result[sch][gene]) + ', ' + str(num)
                     else:
                         result[sch][gene] = num
-                        # if num <= result[sch][gene]:
-                        #     result[sch][gene] = num
-                        # else:
-                        #     next
                 # new allele
                 elif alen == hlen & nident != hlen:
                     if gene not in result[sch].keys():
@@ -62,7 +60,7 @@ class mlst():
                     else:
                         next
                     # result[sch] = mlst
-                elif alen != hlen & nident == hlen: # partial match
+                elif alen != hlen & nident == hlen:  # partial match
                     if gene not in result[sch].keys():
                         result[sch][gene] = f'{num}?'
                 else:
