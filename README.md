@@ -55,20 +55,21 @@ cvmmlst -init
 
 
 ```
-Usage: cvmmlst -i <genome assemble directory> -o <output_directory> -minid 90 -mincov 60 -t 4
+usage: cvmmlst -i <genome assemble directory> -o <output_directory>
 
+Author: Qingpo Cui(SZQ Lab, China Agricultural University)
 
 optional arguments:
   -h, --help      show this help message and exit
-  -i I            <input_path>: the PATH to the directory of assembled genome files
+  -i I            <input_path>: the PATH to the directory of assembled genome files. Could not use with -f
+  -f F            <input_file>: the PATH of assembled genome file. Could not use with -i
   -o O            <output_directory>: output PATH
-  -db DB          <database>: resfinder or others, You colud check database list using -list parameter
   -minid MINID    <minimum threshold of identity>, default=90
   -mincov MINCOV  <minimum threshold of coverage>, default=60
   -init           <initialize the reference database>
   -t T            <number of threads>: default=8
   -v, --version   Display version
-  ```
+```
 
 ### Output
 
