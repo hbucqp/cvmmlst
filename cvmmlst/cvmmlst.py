@@ -15,8 +15,12 @@ def args_parse():
     "Parse the input argument, use '-h' for help."
     parser = argparse.ArgumentParser(
         usage='cvmmlst -i <genome assemble directory> -o <output_directory> \n\nAuthor: Qingpo Cui(SZQ Lab, China Agricultural University)\n')
-    parser.add_argument(
-        "-i", help="<input_path>: the PATH to the directory of assembled genome files")
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-i", help="<input_path>: the PATH to the directory of assembled genome files. Could not use with -f")
+    group.add_argument(
+        "-f", help="<input_file>: the PATH of assembled genome file. Could not use with -i")
     parser.add_argument("-o", help="<output_directory>: output PATH")
     parser.add_argument('-minid', default=90,
                         help="<minimum threshold of identity>, default=90")
@@ -72,20 +76,26 @@ def main():
         minid = args.minid
         mincov = args.mincov
 
-        # get the input path
-        input_path = os.path.abspath(args.i)
-
         # check if the output directory exists
         if not os.path.exists(args.o):
             os.mkdir(args.o)
-
         output_path = os.path.abspath(args.o)
 
         # get the database path
         database_path = os.path.join(
             os.path.dirname(__file__), os.path.join(os.path.abspath(os.path.dirname(__file__)), 'db/blast/mlst.fa'))
 
-        for file in os.listdir(input_path):
+        files = []
+
+        if args.i is not None:
+            # get the input path
+            files = os.listdir(os.path.abspath(args.i))
+            input_path = os.path.abspath(args.i)
+        else:
+            files.append(os.path.abspath(args.f))
+            input_path = os.path.dirname(os.path.abspath(args.f))
+
+        for file in files:
             file_base = str(os.path.splitext(file)[0])
             output_filename = file_base + '_tab.txt'
             outfile = os.path.join(output_path, output_filename)
