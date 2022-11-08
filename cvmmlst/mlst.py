@@ -51,16 +51,21 @@ class mlst():
                             print('Found additional exact allele match')
                             result[sch][gene] = str(
                                 result[sch][gene]) + ', ' + str(num)
+                        else:
+                            result[sch][gene] = num
                     else:
                         result[sch][gene] = num
                 # new allele
-                elif alen == hlen & nident != hlen:
+                elif (alen == hlen) & (nident != hlen):
+                    # print('xx')
                     if gene not in result[sch].keys():
+                        # print('xxx')
                         result[sch][gene] = f'~{num}'
                     else:
                         next
                     # result[sch] = mlst
-                elif alen != hlen & nident == hlen:  # partial match
+                elif (alen != hlen) & (nident == hlen):  # partial match
+                    # print('xxxx')
                     if gene not in result[sch].keys():
                         result[sch][gene] = f'{num}?'
                 else:
@@ -102,27 +107,72 @@ class mlst():
         genotype[scheme] = {'nloci': count, 'profiles': sig}
         return col, genotype
 
-    @staticmethod
-    def best_scheme(result):
-        """
-        get the best scheme base on the number of found loci
-        """
-        schemes = []
-        length = []
-        for item in result.keys():
-            schemes.append(item)
-            length.append(len(result[item]))
-        scheme = schemes[length.index(max(length))]
-        return scheme
+    # @staticmethod
+    # def best_scheme(result):
+    #     """
+    #     get the best scheme base on the number of found loci
+    #     """
+    #     schemes = []
+    #     scores = []
+    #     for item in result.keys():
+    #         schemes.append(item)
+    #         gene_locus_dict = result[item]
+    #         # solve could not found best scheme bug when scheme (have novel or approximate loci) 
+    #         # have same loci compared to best scheme
+    #         nloci = len(gene_locus_dict)
+    #         score = nloci
+    #         for gene in gene_locus_dict.keys():
+    #             allele_num = gene_locus_dict[gene]
+    #             if re.search('~',allele_num):
+    #                 score -= 0.5
+    #             elif re.search(r'\?', allele_num):
+    #                 score -= 1
+    #             else:
+    #                 score = score
+    #         print(f'score {score}')
+    #         scores.append(score)
+
+
+
+
+    #         # length.append(len(result[item]))
+    #     scheme = schemes[scores.index(max(scores))]
+    #     return scheme
 
     # process result
     # {'listeria_2': {'abcZ': '2', 'cat': '11', 'lhkA': '7', 'dat': '3', 'dapE': '3', 'ldh': '1', 'bglA': '1'}}
 
     @staticmethod
-    def get_st(result, scheme):
+    def get_st(result):
         """
         get sequence type
         """
+
+        # Get best match scheme
+        schemes = []
+        scores = []
+        for item in result.keys():
+            schemes.append(item)
+            gene_locus_dict = result[item]
+            # solve could not found best scheme bug when scheme (have novel or approximate loci) 
+            # have same loci compared to best scheme
+            nloci = len(gene_locus_dict)
+            score = nloci
+            for gene in gene_locus_dict.keys():
+                allele_num = gene_locus_dict[gene]
+                if re.search('~',allele_num):
+                    score -= 0.5
+                elif re.search(r'\?', allele_num):
+                    score -= 1
+                else:
+                    score = score
+            # print(f'score {score}')
+            scores.append(score)
+            # length.append(len(result[item]))
+        scheme = schemes[scores.index(max(scores))]
+
+        # Get Sequence Type
+
         col, genotype = mlst.build_genotype(scheme)
         # print(genotype) # genotype为dict {sig:st}
         loci = len(result[scheme])

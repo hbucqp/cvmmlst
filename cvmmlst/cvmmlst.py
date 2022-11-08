@@ -80,6 +80,7 @@ def main():
         if not os.path.exists(args.o):
             os.mkdir(args.o)
         output_path = os.path.abspath(args.o)
+        # print(output_path)
 
         # get the database path
         database_path = os.path.join(
@@ -96,10 +97,13 @@ def main():
             input_path = os.path.dirname(os.path.abspath(args.f))
 
         for file in files:
-            file_base = str(os.path.splitext(file)[0])
+            file_base = str(os.path.basename(os.path.splitext(file)[0]))
             output_filename = file_base + '_tab.txt'
-            outfile = os.path.join(output_path, output_filename)
+            # print(output_path)
+            # print('xxx')
             # print(file_base)
+            outfile = os.path.join(output_path, output_filename)
+            # print(outfile)
             file_path = os.path.join(input_path, file)
             if os.path.isfile(file_path):
                 # print("TRUE")
@@ -107,12 +111,10 @@ def main():
                     print(f'Processing {file}')
                     result = mlst(file_path, database_path, output_path,
                                   threads, minid, mincov).biopython_blast()
+                    # print(result) # for debug
                     if len(result) != 0:
-
-                        sch = mlst.best_scheme(result)
-
-                        df = mlst.get_st(result, sch)
-
+                        # sch = mlst.best_scheme(result)
+                        df = mlst.get_st(result)
                         if len(df) != 0:
                             df['FILE'] = file_base
                             order = list(reversed(df.columns.to_list()))
