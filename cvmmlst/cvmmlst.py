@@ -16,7 +16,7 @@ def args_parse():
     parser = argparse.ArgumentParser(
         usage='cvmmlst -i <genome assemble directory> -o <output_directory> \n\nAuthor: Qingpo Cui(SZQ Lab, China Agricultural University)\n')
 
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument(
         "-i", help="<input_path>: the PATH to the directory of assembled genome files. Could not use with -f")
     group.add_argument(
