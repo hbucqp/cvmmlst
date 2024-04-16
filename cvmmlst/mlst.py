@@ -1,10 +1,11 @@
-
+#!/usr/bin/python3
 # -*- coding:utf-8 -*-
 
 import os
 import re
 import sys
 import pandas as pd
+import numpy as np
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -107,37 +108,44 @@ class mlst():
         genotype[scheme] = {'nloci': count, 'profiles': sig}
         return col, genotype
 
-    # @staticmethod
-    # def best_scheme(result):
-    #     """
-    #     get the best scheme base on the number of found loci
-    #     """
-    #     schemes = []
-    #     scores = []
-    #     for item in result.keys():
-    #         schemes.append(item)
-    #         gene_locus_dict = result[item]
-    #         # solve could not found best scheme bug when scheme (have novel or approximate loci) 
-    #         # have same loci compared to best scheme
-    #         nloci = len(gene_locus_dict)
-    #         score = nloci
-    #         for gene in gene_locus_dict.keys():
-    #             allele_num = gene_locus_dict[gene]
-    #             if re.search('~',allele_num):
-    #                 score -= 0.5
-    #             elif re.search(r'\?', allele_num):
-    #                 score -= 1
-    #             else:
-    #                 score = score
-    #         print(f'score {score}')
-    #         scores.append(score)
+    @staticmethod
+    def get_best_scheme(result):
+        """
+        Get the best scheme base on the number of found loci
+        """
+        schemes = []
+        scores = []
+        for item in result.keys():
+            schemes.append(item)
+            gene_locus_dict = result[item]
+            # solve could not found best scheme bug when scheme (have novel or approximate loci)
+            # have same loci compared to best scheme
+            nloci = len(gene_locus_dict)
+            score = nloci
+            for gene in gene_locus_dict.keys():
+                allele_num = gene_locus_dict[gene]
+                if re.search('~', allele_num):
+                    score -= 0.5
+                elif re.search(r'\?', allele_num):
+                    score -= 1
+                else:
+                    score = score
+            # print(f'score {score}')
+            scores.append(score)
 
+            # Get the max values in scores
+            max_value = max(scores)
 
+            # Get the best schemes based on the max scores
+            schemes_array = np.array(schemes)
+            # print(f'schemes_array: {schemes_array}')
+            # print(type(schemes_array))
+            scores_array = np.array(scores)
+            index_array = np.where(scores_array == max_value, True, False)
+            # print(type(index_array))
 
-
-    #         # length.append(len(result[item]))
-    #     scheme = schemes[scores.index(max(scores))]
-    #     return scheme
+            best_schemes = schemes_array[index_array].tolist()  # list type
+        return best_schemes
 
     # process result
     # {'listeria_2': {'abcZ': '2', 'cat': '11', 'lhkA': '7', 'dat': '3', 'dapE': '3', 'ldh': '1', 'bglA': '1'}}
@@ -148,58 +156,64 @@ class mlst():
         get sequence type
         """
 
-        # Get best match scheme
-        schemes = []
-        scores = []
-        for item in result.keys():
-            schemes.append(item)
-            gene_locus_dict = result[item]
-            # solve could not found best scheme bug when scheme (have novel or approximate loci) 
-            # have same loci compared to best scheme
-            nloci = len(gene_locus_dict)
-            score = nloci
-            for gene in gene_locus_dict.keys():
-                allele_num = gene_locus_dict[gene]
-                if re.search('~',allele_num):
-                    score -= 0.5
-                elif re.search(r'\?', allele_num):
-                    score -= 1
-                else:
-                    score = score
-            # print(f'score {score}')
-            scores.append(score)
-            # length.append(len(result[item]))
-        scheme = schemes[scores.index(max(scores))]
+        # # Get best match scheme
+        # schemes = []
+        # scores = []
+        # for item in result.keys():
+        #     schemes.append(item)
+        #     gene_locus_dict = result[item]
+        #     # solve could not found best scheme bug when scheme (have novel or approximate loci)
+        #     # have same loci compared to best scheme
+        #     nloci = len(gene_locus_dict)
+        #     score = nloci
+        #     for gene in gene_locus_dict.keys():
+        #         allele_num = gene_locus_dict[gene]
+        #         if re.search('~',allele_num):
+        #             score -= 0.5
+        #         elif re.search(r'\?', allele_num):
+        #             score -= 1
+        #         else:
+        #             score = score
+        #     # print(f'score {score}')
+        #     scores.append(score)
+        #     # length.append(len(result[item]))
+        # scheme = schemes[scores.index(max(scores))]
+
+        # Get best schemes
+        schemes = mlst.get_best_scheme(result)
 
         # Get Sequence Type
+        df_ST = pd.DataFrame()  # init a empty dataframe
+        for scheme in schemes:
+            col, genotype = mlst.build_genotype(scheme)
+            # print(genotype) # genotype为dict {sig:st}
+            loci = len(result[scheme])
+            print(result[scheme])
+            sig = ''
+            if loci < genotype[scheme]['nloci']:
+                st = 'NA'
+                df_tmp = pd.DataFrame.from_dict(
+                    result[scheme], orient='index').T
+                df_tmp['Note'] = f'Only found {loci} loci in genome, could not determine ST'
 
-        col, genotype = mlst.build_genotype(scheme)
-        # print(genotype) # genotype为dict {sig:st}
-        loci = len(result[scheme])
-        print(result[scheme])
-        sig = ''
-        if loci < genotype[scheme]['nloci']:
-            st = 'NA'
-            df_tmp = pd.DataFrame.from_dict(result[scheme], orient='index').T
-            df_tmp['Note'] = f'Only found {loci} loci in genome, could not determine ST'
-
-        else:
-            alleles = []
-            for i in col:
-                alleles.append(result[scheme][i])
-            alleles_str = '-'.join(alleles)
-            if re.search('[\?~]', alleles_str):
-                st = '-'
             else:
-                if alleles_str in genotype[scheme]['profiles']:
-                    st = genotype[scheme]['profiles'][alleles_str]
+                alleles = []
+                for i in col:
+                    alleles.append(result[scheme][i])
+                alleles_str = '-'.join(alleles)
+                if re.search('[\?~]', alleles_str):
+                    st = '-'
                 else:
-                    st = "NewST"
-            df_tmp = pd.DataFrame.from_dict(
-                dict(zip(col, alleles)), orient='index').T
-        df_tmp['ST'] = st
-        df_tmp['Scheme'] = scheme
-        return df_tmp
+                    if alleles_str in genotype[scheme]['profiles']:
+                        st = genotype[scheme]['profiles'][alleles_str]
+                    else:
+                        st = "NewST"
+                df_tmp = pd.DataFrame.from_dict(
+                    dict(zip(col, alleles)), orient='index').T
+            df_tmp['ST'] = st
+            df_tmp['Scheme'] = scheme
+            df_ST = pd.concat([df_ST, df_tmp])
+        return df_ST
 
     @staticmethod
     def is_fasta(file):

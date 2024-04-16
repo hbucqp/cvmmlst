@@ -20,3 +20,4 @@ ST	16S	ftsZ	gltA	groEL	ribC	rpoB	clonal_complex
 19	7	12	12	17	17	16	
 20	8	12	13	18	17	16	
 21	9	13	14	19	18	17	
+22	2	15	18	20	20	18	
