@@ -34,8 +34,10 @@ class mlst():
         stdout, stderr = cline()
         df = pd.read_csv(self.temp_output, sep='\t', names=[
             'sseqid', 'slen', 'length', 'nident'])
+        # df.to_csv('test.csv')
 
         result = {}
+        length_filter = {}
         for i, row in df.iterrows():
             sch, gene, num = re.match(
                 '^(\w+)\.(\w+)[_-](\d+)', row['sseqid']).group(1, 2, 3)
@@ -45,17 +47,25 @@ class mlst():
             if nident * 100 / hlen >= self.mincov:
                 if sch not in result.keys():  # check if sch is the key of result
                     result[sch] = {}
+                    length_filter[sch] = {}
                 # resolve the bug that could not get exactly matched allele
                 if hlen == alen & nident == hlen:  # exact match
                     if gene in result[sch].keys():
                         if not re.search(r'[~\?]', result[sch][gene]):
-                            print('Found additional exact allele match')
-                            result[sch][gene] = str(
-                                result[sch][gene]) + ', ' + str(num)
+                            # filter mlst results based the allele length, choose longer length allele
+                            if hlen < length_filter[sch][gene]:
+                                next
+                            elif hlen == length_filter[sch][gene]:
+                                print('Found additional exact allele match')
+                                result[sch][gene] = str(
+                                    result[sch][gene]) + ', ' + str(num)
+                            else:
+                                result[sch][gene] = num
                         else:
                             result[sch][gene] = num
                     else:
                         result[sch][gene] = num
+                        length_filter[sch][gene] = hlen
                 # new allele
                 elif (alen == hlen) & (nident != hlen):
                     # print('xx')
