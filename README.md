@@ -108,10 +108,55 @@ optional arguments:
 
 #### Example
 ```
-cvmmlst add_scheme -name my_scheme -path path_to_my_scheme
+cvmmlst add_scheme -name my_scheme -path PATH_TO_my_scheme
 ```
 
+The structure of scheme directory should looks like:
+```
+own_scheme
+├── locus1.fasta
+├── locus2.fasta
+├── locus3.fasta
+├── locus4.fasta
+├── locus5.fasta
+├── locus6.fasta
+├── locus7.fasta
+└── own_scheme.txt
+```
 
+The fasta file of corresponding locus is a multifasta file.
+
+The multifasta file looks like:
+```
+>locus1_1
+ATGATAGGTGAAGATATACAAAGAGTATTAG
+>locus1_2
+ATGATAGGTGAAGATATACAAAGAGTATTAG
+>locus1_3
+ATGATAGGTGAAGATATACAAAGAGTATTAG
+>locus1_4
+ATGATAGGCGAAGATATACAAAGAGTATTAG
+>alocus1_5
+ATGATAGGCGAAGATATACAAAGAGTATTAG
+>locus1_6
+ATGATAGGTGAAGATATACAAAGAGTATTAG
+```
+
+The own_scheme.txt is a tab-delimited text file.
+
+The profile looks like:
+
+```
+|ST|locus1|locus2|locus3|locus4|locus5|locus6|locus7|clonal_complex|
+|---|---|---|---|---|---|---|---|---|
+|1|2|1|54|3|4|1|5|ST-21 complex|
+|2|4|7|51|4|1|7|1|ST-45 complex|
+|3|3|2|5|10|11|11|6|ST-49 complex|
+|4|10|11|16|7|10|5|7|ST-403 complex|
+|5|7|2|5|2|10|3|6|ST-353 complex|
+|6|63|34|27|33|45|5|7||
+|7|8|10|2|2|14|12|6|ST-354 complex|
+```
 
 ### Output
 
