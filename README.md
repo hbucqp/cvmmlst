@@ -14,6 +14,10 @@
 cvmmlst is a bacteria mlst analysis tool that could run on Windows, Linux and MAC os. Some of the code ideas in cvmmlst draw on Torsten Seemanns excellent [mlst](https://github.com/tseemann/mlst) tool.
 
 
+
+
+
+
 ## Installation
 ### Using pip
 pip3 install cvmmlst
@@ -49,7 +53,7 @@ conda install -c bioconda blast
 
 After finish installation, you should first initialize the reference database using following command
 ```
-cvmmlst -init
+cvmmlst init
 ```
 
 
@@ -59,16 +63,22 @@ usage: cvmmlst -i <genome assemble directory> -o <output_directory>
 
 Author: Qingpo Cui(SZQ Lab, China Agricultural University)
 
-optional arguments:
-  -h, --help      show this help message and exit
-  -i I            <input_path>: the PATH to the directory of assembled genome files. Could not use with -f
-  -f F            <input_file>: the PATH of assembled genome file. Could not use with -i
-  -o O            <output_directory>: output PATH
-  -minid MINID    <minimum threshold of identity>, default=90
-  -mincov MINCOV  <minimum threshold of coverage>, default=60
-  -init           <initialize the reference database>
-  -t T            <number of threads>: default=8
-  -v, --version   Display version
+options:
+  -h, --help            show this help message and exit
+  -i I                  <input_path>: the PATH to the directory of assembled genome files. Could not use with -f
+  -f F                  <input_file>: the PATH of assembled genome file. Could not use with -i
+  -o O                  <output_directory>: output PATH
+  -scheme SCHEME        <mlst scheme want to use>, cvmmlst show_schemes command could output all available schems
+  -minid MINID          <minimum threshold of identity>, default=90
+  -mincov MINCOV        <minimum threshold of coverage>, default=60
+  -t T                  <number of threads>: default=8
+  -v, --version         Display version
+
+cvmmlst subcommand:
+  {init,show_schemes,add_scheme}
+    init                <initialize the reference database>
+    show_schemes        <show the list of all available schemes>
+    add_scheme          <add custome scheme, use cvmmlst add_scheme -h for help>
 ```
 
 ### Output
@@ -89,3 +99,11 @@ The content in csv summary file like
 |3 |1 |4| 39 | 12 | 14 | 4 |87 | listeria_2 | sample04|
 |2 |4 |4 |1 |4 |3 |5 |3 |listeria_2 | sample05|
 |6 |6| 8 |37 | 7 |8 |1 |121| listeria_2 | sample06|
+
+
+
+
+## Update logs
+|Date|Content|
+|---|---|
+|2024-08-12|Add three subcommand (init, show_schems, add_scheme)|
