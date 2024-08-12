@@ -99,7 +99,7 @@ Author: Qingpo Cui(SZQ Lab, China Agricultural University) add_scheme
 optional arguments:
   -h, --help  show this help message and exit
   -name NAME  <the custome scheme name>
-  -path PATH  <the path of scheme>
+  -path PATH  <the path to the files of custome scheme>
 ```
 
 -name: str -> the scheme name you want to use with -scheme options
