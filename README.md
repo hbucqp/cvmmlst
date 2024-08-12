@@ -47,7 +47,7 @@ conda install -c bioconda blast
 
 
 
-## Usage
+## Introduction
 
 ### Initialize reference database
 
@@ -57,7 +57,7 @@ cvmmlst init
 ```
 
 
-
+### Usage
 ```
 usage: cvmmlst -i <genome assemble directory> -o <output_directory>
 
@@ -80,6 +80,37 @@ cvmmlst subcommand:
     show_schemes        <show the list of all available schemes>
     add_scheme          <add custome scheme, use cvmmlst add_scheme -h for help>
 ```
+
+### Show available schemes
+
+```
+cvmmlst show_schemes
+```
+
+
+
+### Add custome scheme
+```
+usage: cvmmlst -i <genome assemble directory> -o <output_directory>
+
+Author: Qingpo Cui(SZQ Lab, China Agricultural University) add_scheme
+       [-h] [-name NAME] [-path PATH]
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -name NAME  <the custome scheme name>
+  -path PATH  <the path of scheme>
+```
+
+-name: str -> the scheme name you want to use with -scheme options
+-path: str -> the path of the directory that contains the fasta files of locus in schemes and the profile file
+
+#### Example
+```
+cvmmlst add_scheme -name my_scheme -path path_to_my_scheme
+```
+
+
 
 ### Output
 
