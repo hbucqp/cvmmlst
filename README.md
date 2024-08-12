@@ -103,6 +103,7 @@ optional arguments:
 ```
 
 -name: str -> the scheme name you want to use with -scheme options
+
 -path: str -> the path of the directory that contains the fasta files of locus in schemes and the profile file
 
 #### Example
