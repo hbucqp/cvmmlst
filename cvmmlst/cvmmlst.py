@@ -40,6 +40,8 @@ def args_parse():
         "-i", help="<input_path>: the PATH to the directory of assembled genome files. Could not use with -f")
     group.add_argument(
         "-f", help="<input_file>: the PATH of assembled genome file. Could not use with -i")
+
+    # Add options
     parser.add_argument("-o", help="<output_directory>: output PATH")
     parser.add_argument("-scheme", help="<mlst scheme want to use>, cvmmlst show_schemes command could output all available schems")
     parser.add_argument('-minid', default=90,
@@ -237,8 +239,10 @@ def show_db_list():
     schemes = os.listdir(rel_path)
     # print(schemes)
     for file in schemes:
+        # print(file)
         files_path =os.path.join(rel_path, file)
         if os.path.isdir(files_path):
+            # print(files_path)
             scheme_dict = {}
             scheme_path = os.path.join(rel_path, files_path)
             loci_num = 0
@@ -260,7 +264,11 @@ def show_db_list():
             scheme_dict['No. of STs'] = STs_number
             scheme_dict['No. of Locus'] = loci_num
             scheme_dict['Update_date'] = scheme_update_date
-        schemes_list.append(scheme_dict)
+            schemes_list.append(scheme_dict)
+        else:
+            next
+        # print(scheme_dict)
+        
         # else:
         #     print(file)
         #     schemes.remove(file)
@@ -275,6 +283,7 @@ def show_db_list():
     # print(db_df)
     tidy_schemes_df = tabulate(db_df,headers='keys')
     return print(tidy_schemes_df)
+
 
 
 def main():
