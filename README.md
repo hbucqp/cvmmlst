@@ -18,27 +18,28 @@ cvmmlst is a bacteria mlst analysis tool that could run on Windows, Linux and MA
 
 
 
-## Installation
-### Using pip
+## 1. Installation
+```
 pip3 install cvmmlst
+```
 
-### Using conda
-comming soon...
 
-## Dependency
+
+
+## 2. Dependency
 - BLAST+ >2.7.0
 
 **you should add BLAST in your PATH**
 
 
-## Blast installation
-### Windows
+## 3. Blast installation
+### 3.1 Windows
 
 
 Following this tutorial:
 [Add blast into your windows PATH](http://82.157.185.121:22300/shares/BevQrP0j8EXn76p7CwfheA)
 
-### Linux/Mac
+### 3.2 Linux/Mac
 The easyest way to install blast is:
 
 ```
@@ -47,9 +48,9 @@ conda install -c bioconda blast
 
 
 
-## Introduction
+## 4. Introduction
 
-### Initialize reference database
+### 4.1 Initialize reference database
 
 After finish installation, you should first initialize the reference database using following command
 ```
@@ -57,7 +58,7 @@ cvmmlst init
 ```
 
 
-### Usage
+### 4.2 Usage
 ```
 usage: cvmmlst -i <genome assemble directory> -o <output_directory>
 
@@ -81,7 +82,7 @@ cvmmlst subcommand:
     add_scheme          <add custome scheme, use cvmmlst add_scheme -h for help>
 ```
 
-### Show available schemes
+### 4.3 Show available schemes
 
 ```
 cvmmlst show_schemes
@@ -89,7 +90,7 @@ cvmmlst show_schemes
 
 
 
-### Add custome scheme
+### 4.4 Add custome scheme
 ```
 usage: cvmmlst -i <genome assemble directory> -o <output_directory>
 
@@ -158,7 +159,7 @@ The profile looks like:
 |7|8|10|2|2|14|12|6|ST-354 complex|
 
 
-### Output
+### 4.5 Output
 
 you will get a text file and a summray file in csv format in the output directory.
 
@@ -180,7 +181,7 @@ The content in csv summary file like
 
 
 
-## Update logs
+## 5. Update logs
 |Date|Content|
 |---|---|
 |2024-08-12|Add three subcommand (init, show_schems, add_scheme)|
