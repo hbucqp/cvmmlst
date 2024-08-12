@@ -146,7 +146,7 @@ The own_scheme.txt is a tab-delimited text file.
 
 The profile looks like:
 
-```
+
 |ST|locus1|locus2|locus3|locus4|locus5|locus6|locus7|clonal_complex|
 |---|---|---|---|---|---|---|---|---|
 |1|2|1|54|3|4|1|5|ST-21 complex|
@@ -156,7 +156,7 @@ The profile looks like:
 |5|7|2|5|2|10|3|6|ST-353 complex|
 |6|63|34|27|33|45|5|7||
 |7|8|10|2|2|14|12|6|ST-354 complex|
-```
+
 
 ### Output
 
