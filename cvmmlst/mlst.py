@@ -35,12 +35,12 @@ class mlst():
         df = pd.read_csv(self.temp_output, sep='\t', names=[
             'sseqid', 'slen', 'length', 'nident'])
         # df.to_csv('test.csv')
+        # print(df)
 
         result = {}
         length_filter = {}
         for i, row in df.iterrows():
-            sch, gene, num = re.match(
-                '^(\w+)\.(\w+)[_-](\d+)', row['sseqid']).group(1, 2, 3)
+            sch, gene, num = re.match('^(\w+)\.(\w+)[_-](\d+)', row['sseqid']).group(1, 2, 3)
             hlen = row['slen']
             alen = row['length']
             nident = row['nident']
@@ -50,19 +50,25 @@ class mlst():
                     length_filter[sch] = {}
                 # resolve the bug that could not get exactly matched allele
                 if hlen == alen & nident == hlen:  # exact match
+                    # solve filter[sch] Keys Not Found Error
+                    if gene not in length_filter[sch].keys():
+                        length_filter[sch][gene] = hlen
                     if gene in result[sch].keys():
                         if not re.search(r'[~\?]', result[sch][gene]):
                             # filter mlst results based the allele length, choose longer length allele
+                            # print(result)
+                            # print(length_filter)
                             if hlen < length_filter[sch][gene]:
                                 next
                             elif hlen == length_filter[sch][gene]:
                                 print('Found additional exact allele match')
-                                result[sch][gene] = str(
-                                    result[sch][gene]) + ', ' + str(num)
+                                result[sch][gene] = str(result[sch][gene]) + ', ' + str(num)
                             else:
                                 result[sch][gene] = num
+                                length_filter[sch][gene] = hlen
                         else:
                             result[sch][gene] = num
+                            length_filter[sch][gene] = hlen
                     else:
                         result[sch][gene] = num
                         length_filter[sch][gene] = hlen
