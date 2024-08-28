@@ -124,12 +124,14 @@ def initialize_db():
                                     scheme_blast_file.write(line)
             # print(scheme_blastfile)
             print(f"Created scheme specific BLAST database for {scheme}")
-            subprocess.run(['makeblastdb', '-hash_index', '-in', scheme_blastfile, '-dbtype',
-                            'nucl', '-title', 'PubMLST', '-parse_seqids'], shell=True, text=True)
+            cmd = f'makeblastdb -hash_index -in {scheme_blastfile} -dbtype nucl -title PubMLST -parse_seqids'
+            # subprocess.run(['makeblastdb', '-hash_index', '-in', scheme_blastfile, '-dbtype', 'nucl', '-title', 'PubMLST', '-parse_seqids'], shell=True, text=True)
+            subprocess.run(cmd, shell=True, text=True)
             # print('------------------------------')
 
-    subprocess.run(['makeblastdb', '-hash_index', '-in', BLASTFILE, '-dbtype',
-                    'nucl', '-title', 'PubMLST', '-parse_seqids'], shell=True, text=True)
+    # subprocess.run(['makeblastdb', '-hash_index', '-in', BLASTFILE, '-dbtype', 'nucl', '-title', 'PubMLST', '-parse_seqids'], shell=True, text=True)
+    cmd = f'makeblastdb -hash_index -in {BLASTFILE} -dbtype nucl -title PubMLST -parse_seqids'
+    subprocess.run(cmd, shell=True, text=True)
     print('-' * 30)
     print(
         f"Created merged BLAST database for all availbale schemes using {BLASTFILE}")
