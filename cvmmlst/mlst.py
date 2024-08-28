@@ -40,7 +40,8 @@ class mlst():
         result = {}
         length_filter = {}
         for i, row in df.iterrows():
-            sch, gene, num = re.match('^(\w+)\.(\w+)[_-](\d+)', row['sseqid']).group(1, 2, 3)
+            sch, gene, num = re.match(
+                '^(\w+)\.(\w+)[_-](\d+)', row['sseqid']).group(1, 2, 3)
             hlen = row['slen']
             alen = row['length']
             nident = row['nident']
@@ -62,7 +63,8 @@ class mlst():
                                 next
                             elif hlen == length_filter[sch][gene]:
                                 print('Found additional exact allele match')
-                                result[sch][gene] = str(result[sch][gene]) + ', ' + str(num)
+                                result[sch][gene] = str(
+                                    result[sch][gene]) + ', ' + str(num)
                             else:
                                 result[sch][gene] = num
                                 length_filter[sch][gene] = hlen

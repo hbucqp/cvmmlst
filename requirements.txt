@@ -1,4 +1,5 @@
 Bio==1.7.1
+cvmcore==0.1.5
 numpy==1.22.2
 orjson==3.10.7
 pandas==1.4.0
