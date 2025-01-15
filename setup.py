@@ -18,7 +18,13 @@ except ImportError:
 
 
 requirements = [
-    'Bio', 'pandas', 'setuptools'
+    'Bio',
+    'pandas',
+    'numpy',
+    'setuptools',
+    'cvmcore >= 0.2.0',
+    'dask',
+    'tabulate'
 ]
 
 
