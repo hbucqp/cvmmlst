@@ -155,6 +155,7 @@ def add_scheme(name: str, path: str):
 
     extensions = ('.fasta', '.fsa', 'fa', 'fna', 'tfa')
 
+    # Get the fasta file in the scheme directory
     for file in os.listdir(path):
         file = os.path.join(path, file)
         if os.path.isfile(file):
@@ -345,4 +346,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    major_version = sys.version_info.major
+    minor_version = sys.version_info.minor
+    if major_version > 3 or (major_version == 3 and minor_version >= 7):
+        main()
+    else:
+        print("Python version is lower than 3.7. Exiting...")
+        sys.exit()
