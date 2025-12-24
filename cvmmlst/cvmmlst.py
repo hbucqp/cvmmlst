@@ -12,7 +12,8 @@ import shutil
 from tabulate import tabulate
 from Bio import SeqIO
 from cvmcore.cvmcore import cfunc
-from .mlst import mlst  # remember add dot
+from .mlst import MLST  # remember add dot
+# from mlst import MLST  # remember add dot
 
 
 def args_parse():
@@ -161,7 +162,7 @@ def add_scheme(name: str, path: str):
         if os.path.isfile(file):
             file_basename = os.path.splitext(os.path.basename(file))[0]
             if file.endswith(extensions):
-                if mlst.is_fasta(file):
+                if cfunc.is_fasta(file):
                     dest_file = os.path.join(dest_path, f'{file_basename}.tfa')
                     # print(dest_file)
                     shutil.copy(file, dest_file)
@@ -283,14 +284,14 @@ def main():
             file_path = os.path.join(input_path, file)
             if os.path.isfile(file_path):
                 # print("TRUE")
-                if mlst.is_fasta(file_path):
+                if cfunc.is_fasta(file_path):
                     print(f'Processing {file}')
-                    result = mlst(file_path, database_path, output_path,
+                    result = MLST(file_path, database_path, output_path,
                                   threads, minid, mincov).biopython_blast()
                     # print(result) # for debug
                     if len(result) != 0:
                         # sch = mlst.best_scheme(result)
-                        df = mlst.get_st(result)
+                        df = MLST.get_st(result)
                         if len(df) != 0:
                             df['FILE'] = file_base
                             order = list(reversed(df.columns.to_list()))

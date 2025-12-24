@@ -4,91 +4,146 @@
 import os
 import re
 import sys
+import subprocess
+from typing import Dict, List, Tuple
 import pandas as pd
 import numpy as np
-from Bio import SeqIO
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
-from Bio.Blast import NCBIXML
 
-# from Bio.Blast import NCBIWWW
-from Bio.Blast.Applications import NcbiblastnCommandline
-from Bio.Blast.Applications import NcbimakeblastdbCommandline
+from cvmcore.cvmcore import cfunc
 
 
-class mlst():
-    def __init__(self, inputfile, database, output, threads, minid=90, mincov=60):
+class MLST:  # Renamed to follow Python naming conventions
+    def __init__(self, inputfile: str, database: str, output: str, threads: int,
+                 minid: float = 90, mincov: float = 60):
+        """Initialize MLST analysis.
+
+        Args:
+            inputfile: Path to input FASTA file
+            database: Path to MLST database
+            output: Output directory path
+            threads: Number of threads to use
+            minid: Minimum identity percentage (default: 90)
+            mincov: Minimum coverage percentage (default: 60)
+        """
+        if not os.path.exists(inputfile):
+            raise FileNotFoundError(f"Input file not found: {inputfile}")
+        if not cfunc.is_fasta(inputfile):
+            raise ValueError(f"Input file is not in FASTA format: {inputfile}")
+
         self.inputfile = os.path.abspath(inputfile)
         self.database = database
-        self.minid = int(minid)
-        self.mincov = int(mincov)
+        self.minid = float(minid)
+        self.mincov = float(mincov)
         self.temp_output = os.path.join(os.path.abspath(output), 'temp.txt')
         self.threads = threads
+        self.blast_type = 'blastn'  # Add blast type attribute
+
+    def process_blast_results(self, df: pd.DataFrame) -> Dict:
+        """Process BLAST results and identify alleles.
+
+        Args:
+            df: DataFrame containing BLAST results
+
+        Returns:
+            Dictionary containing processed MLST results
+        """
+        result = {}
+        length_filter = {}
+
+        for _, row in df.iterrows():
+            try:
+                sch, gene, num = re.match(
+                    r'^(\w+)\.(\w+)[_-](\d+)', row['sseqid']).group(1, 2, 3)
+            except AttributeError:
+                continue
+
+            hlen = row['slen']
+            alen = row['length']
+            nident = row['nident']
+
+            if nident * 100 / hlen < self.mincov:
+                continue
+
+            if sch not in result:
+                result[sch] = {}
+                length_filter[sch] = {}
+
+            exact_match = hlen == alen and nident == hlen
+            if exact_match:
+                self._handle_exact_match(
+                    sch, gene, num, hlen, result, length_filter)
+            elif alen == hlen and nident != hlen:
+                self._handle_new_allele(sch, gene, num, result)
+            elif alen != hlen and nident == hlen:
+                self._handle_partial_match(sch, gene, num, result)
+
+        return result
+
+    def _handle_exact_match(self, sch: str, gene: str, num: str, hlen: int,
+                            result: Dict, length_filter: Dict) -> None:
+        """Handle exact matches in BLAST results."""
+        if gene not in length_filter[sch]:
+            length_filter[sch][gene] = hlen
+
+        if gene in result[sch]:
+            if not re.search(r'[~\?]', result[sch][gene]):
+                if hlen > length_filter[sch][gene]:
+                    result[sch][gene] = num
+                    length_filter[sch][gene] = hlen
+                elif hlen == length_filter[sch][gene]:
+                    result[sch][gene] = f"{result[sch][gene]}, {num}"
+            else:
+                result[sch][gene] = num
+                length_filter[sch][gene] = hlen
+        else:
+            result[sch][gene] = num
+            length_filter[sch][gene] = hlen
+
+    def _handle_new_allele(self, sch: str, gene: str, num: str, result: Dict) -> None:
+        """Handle new alleles in BLAST results."""
+        if gene not in result[sch]:
+            result[sch][gene] = f'~{num}'
+
+    def _handle_partial_match(self, sch: str, gene: str, num: str, result: Dict) -> None:
+        """Handle partial matches in BLAST results."""
+        if gene not in result[sch]:
+            result[sch][gene] = f'{num}?'
 
     def biopython_blast(self):
-        cline = NcbiblastnCommandline(query=self.inputfile, db=self.database, dust='no', ungapped=True,
-                                      evalue=1E-20, out=self.temp_output,  # delete culling_limit parameters
-                                      outfmt="6 sseqid slen length nident",
-                                      perc_identity=self.minid, max_target_seqs=10000,
-                                      num_threads=self.threads)
-        stdout, stderr = cline()
+        # cline = NcbiblastnCommandline(query=self.inputfile, db=self.database, dust='no', ungapped=True,
+        #                               evalue=1E-20, out=self.temp_output,  # delete culling_limit parameters
+        #                               outfmt="6 sseqid slen length nident",
+        #                               perc_identity=self.minid, max_target_seqs=10000,
+        #                               num_threads=self.threads)
+        # stdout, stderr = cline()
+
+        cline = [self.blast_type, '-query', self.inputfile, '-db', self.database, '-dust', 'no', '-ungapped',
+                 '-evalue', '1E-20', '-out', self.temp_output,
+                 '-outfmt', '6 sseqid slen length nident', '-perc_identity', str(
+                     self.minid), '-max_target_seqs', '10000',
+                 '-num_threads', str(self.threads)]
+
+        # print(cline)
+
+        # Run the command using subprocess
+        cline_result = subprocess.run(
+            cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # Capture the output and error
+        stdout = cline_result.stdout
+        stderr = cline_result.stderr
+
+        # Print or handle the output and error as needed
+        # print(stdout)
+        if stderr:
+            print(f"Error: {stderr}")
+
         df = pd.read_csv(self.temp_output, sep='\t', names=[
             'sseqid', 'slen', 'length', 'nident'])
         # df.to_csv('test.csv')
         # print(df)
 
-        result = {}
-        length_filter = {}
-        for i, row in df.iterrows():
-            sch, gene, num = re.match(
-                '^(\w+)\.(\w+)[_-](\d+)', row['sseqid']).group(1, 2, 3)
-            hlen = row['slen']
-            alen = row['length']
-            nident = row['nident']
-            if nident * 100 / hlen >= self.mincov:
-                if sch not in result.keys():  # check if sch is the key of result
-                    result[sch] = {}
-                    length_filter[sch] = {}
-                # resolve the bug that could not get exactly matched allele
-                if hlen == alen & nident == hlen:  # exact match
-                    # solve filter[sch] Keys Not Found Error
-                    if gene not in length_filter[sch].keys():
-                        length_filter[sch][gene] = hlen
-                    if gene in result[sch].keys():
-                        if not re.search(r'[~\?]', result[sch][gene]):
-                            # filter mlst results based the allele length, choose longer length allele
-                            # print(result)
-                            # print(length_filter)
-                            if hlen < length_filter[sch][gene]:
-                                next
-                            elif hlen == length_filter[sch][gene]:
-                                print('Found additional exact allele match')
-                                result[sch][gene] = str(
-                                    result[sch][gene]) + ', ' + str(num)
-                            else:
-                                result[sch][gene] = num
-                                length_filter[sch][gene] = hlen
-                        else:
-                            result[sch][gene] = num
-                            length_filter[sch][gene] = hlen
-                    else:
-                        result[sch][gene] = num
-                        length_filter[sch][gene] = hlen
-                # new allele
-                elif (alen == hlen) & (nident != hlen):
-                    # print('xx')
-                    if gene not in result[sch].keys():
-                        # print('xxx')
-                        result[sch][gene] = f'~{num}'
-                    else:
-                        next
-                    # result[sch] = mlst
-                elif (alen != hlen) & (nident == hlen):  # partial match
-                    # print('xxxx')
-                    if gene not in result[sch].keys():
-                        result[sch][gene] = f'{num}?'
-                else:
-                    next
+        result = self.process_blast_results(df)
         # remove temp blastn output file
         os.remove(self.temp_output)
         return result
@@ -121,49 +176,37 @@ class mlst():
         profile_path = os.path.join(db_path, scheme + '.txt')
         df_profile = pd.read_csv(profile_path, sep='\t')
         df_profile['profile'] = df_profile[col].apply(
-            lambda x: '-'.join(x .astype(str)), axis=1)
+            lambda x: '-'.join(x.astype(str)), axis=1)
         sig = dict(zip(df_profile['profile'], df_profile['ST']))
         genotype[scheme] = {'nloci': count, 'profiles': sig}
         return col, genotype
 
     @staticmethod
-    def get_best_scheme(result):
-        """
-        Get the best scheme base on the number of found loci
+    def get_best_scheme(result: Dict) -> List[str]:
+        """Get the best scheme based on number and quality of matches.
+
+        Args:
+            result: Dictionary containing MLST results
+
+        Returns:
+            List of best matching scheme names
         """
         schemes = []
         scores = []
-        for item in result.keys():
-            schemes.append(item)
-            gene_locus_dict = result[item]
-            # solve could not found best scheme bug when scheme (have novel or approximate loci)
-            # have same loci compared to best scheme
-            nloci = len(gene_locus_dict)
-            score = nloci
-            for gene in gene_locus_dict.keys():
-                allele_num = gene_locus_dict[gene]
-                if re.search('~', allele_num):
+
+        for scheme, gene_locus_dict in result.items():
+            score = len(gene_locus_dict)
+            for allele_num in gene_locus_dict.values():
+                if '~' in allele_num:
                     score -= 0.5
-                elif re.search(r'\?', allele_num):
+                elif '?' in allele_num:
                     score -= 1
-                else:
-                    score = score
-            # print(f'score {score}')
+
+            schemes.append(scheme)
             scores.append(score)
 
-            # Get the max values in scores
-            max_value = max(scores)
-
-            # Get the best schemes based on the max scores
-            schemes_array = np.array(schemes)
-            # print(f'schemes_array: {schemes_array}')
-            # print(type(schemes_array))
-            scores_array = np.array(scores)
-            index_array = np.where(scores_array == max_value, True, False)
-            # print(type(index_array))
-
-            best_schemes = schemes_array[index_array].tolist()  # list type
-        return best_schemes
+        max_score = max(scores)
+        return [s for s, score in zip(schemes, scores) if score == max_score]
 
     # process result
     # {'listeria_2': {'abcZ': '2', 'cat': '11', 'lhkA': '7', 'dat': '3', 'dapE': '3', 'ldh': '1', 'bglA': '1'}}
@@ -198,12 +241,12 @@ class mlst():
         # scheme = schemes[scores.index(max(scores))]
 
         # Get best schemes
-        schemes = mlst.get_best_scheme(result)
+        schemes = MLST.get_best_scheme(result)
 
         # Get Sequence Type
         df_ST = pd.DataFrame()  # init a empty dataframe
         for scheme in schemes:
-            col, genotype = mlst.build_genotype(scheme)
+            col, genotype = MLST.build_genotype(scheme)
             # print(genotype) # genotype为dict {sig:st}
             loci = len(result[scheme])
             print(result[scheme])
@@ -232,16 +275,3 @@ class mlst():
             df_tmp['Scheme'] = scheme
             df_ST = pd.concat([df_ST, df_tmp])
         return df_ST
-
-    @staticmethod
-    def is_fasta(file):
-        """
-        chcek if the input file is fasta format
-        """
-        try:
-            with open(file, "r") as handle:
-                fasta = SeqIO.parse(handle, "fasta")
-                # False when `fasta` is empty, i.e. wasn't a FASTA file
-                return any(fasta)
-        except:
-            return False
